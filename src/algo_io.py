@@ -2,7 +2,7 @@ from shapely.geometry import Point, LineString
 import geopandas as gpd
 from math import radians, sin, cos, asin, sqrt
 import matplotlib.pyplot as plt
-
+from output_format import OutputFormatItem
 
 def haversine(lon1, lat1, lon2, lat2):
     lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
@@ -14,7 +14,8 @@ def haversine(lon1, lat1, lon2, lat2):
 
 class AlgoIO:
 
-    def __init__(self, algorithm, input_path="input.txt", output_path="output.txt"):
+    def __init__(self, out_format: list[OutputFormatItem], input_path="inpt.txt", output_path="output.txt"):
+        self.out_format = out_format
         self.input_path = input_path
         self.output_path = output_path
         self.execution_time = None
@@ -24,7 +25,6 @@ class AlgoIO:
         self.etols = None
         self.st = None
         self.end = None
-        self.algorithm = algorithm
 
     def gdf_to_input(self, gdf, st, end):
         self.ctov = dict()
@@ -72,55 +72,42 @@ class AlgoIO:
 
     def get_result_fig(self, base_gdf):
 
-        ans = []
-        checked = []
-        landmarks = []
-        print("first")
+        output = []
+
         with open(self.output_path, 'r') as f:
-            ans_size = f.readline()
-            for i in range(int(ans_size) - 1):
-                edge = tuple(map(int, f.readline().split()))
-                ans.append(edge)
-            checked_size = f.readline()
-            for i in range(int(checked_size)):
-                edge = tuple(map(int, f.readline().split()))
-                checked.append(edge)
-            self.execution_time = float(f.readline())
-            if self.algorithm == "alt":
-                landmark_size = f.readline()
-                #print(landmark_size)
-                for i in range(int(landmark_size)):
-                    landmarks.append(self.vtoc[int(f.readline())])
-                #print(landmarks)
-                self.preprocessing_time = float(f.readline())
-
-        print("second")
-        geometry_shortest_path = [self.etols[xy] for xy in ans]
-        gdf_shortest_path = self.get_mercator_gdf(geometry_shortest_path)
-        geometry_checked = [self.etols[xy] for xy in checked]
-        gdf_checked = self.get_mercator_gdf(geometry_checked)
-        gdf_st = self.get_mercator_gdf([Point(self.st[0], self.st[1])])
-        gdf_end = self.get_mercator_gdf([Point(self.end[0], self.end[1])])
-        if self.algorithm == "alt":
-            gdf_landmarks = self.get_mercator_gdf(geometry=landmarks)
-
-        gdf = self.get_mercator_gdf(base_gdf.geometry)
+            for out_form in self.out_format:
+                if out_form.type == "Вершины":
+                    vertex_count = int(f.readline())
+                    verticies = []
+                    for i in range(vertex_count):
+                        verticies.append(self.vtoc[int(f.readline())])
+                    output.append((verticies, out_form.color))
+                if out_form.type == "Дуги":
+                    edge_count = int(f.readline())
+                    edges = []
+                    for i in range(edge_count-1): ###########################################################################################
+                        edge = tuple(map(int, f.readline().split()))
+                        edges.append(self.etols[edge])
+                    output.append((edges, out_form.color))
 
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1])
         ax.axis('off')
-        print(len(gdf_checked))
-        print(len(gdf_shortest_path))
-        base = gdf.plot(ax=ax, linewidth=0.5)
+        gdf = self.get_mercator_gdf(base_gdf.geometry)
+        fig = gdf.plot(ax=ax, linewidth=0.5)
         ax.margins(0)
         ax.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
-        checked = gdf_checked.plot(ax=base, color='black', linewidth=0.5)
-        fig = gdf_shortest_path.plot(ax=checked, color='red', linewidth=0.8)
+
+        for out in output:
+            gdf = self.get_mercator_gdf(out[0])
+            fig = gdf.plot(ax=fig, color=out[1], linewidth=0.8)
+
+        gdf_st = self.get_mercator_gdf([Point(self.st[0], self.st[1])])
+        gdf_end = self.get_mercator_gdf([Point(self.end[0], self.end[1])])
+
         fig = gdf_st.plot(ax=fig, color='brown')
         fig = gdf_end.plot(ax=fig, color='green')
-        print("last")
-        if self.algorithm == "alt":
-            fig = gdf_landmarks.plot(ax=fig, color='gold')
+
 
         return fig.get_figure()
 
