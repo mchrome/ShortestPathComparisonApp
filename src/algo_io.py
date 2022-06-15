@@ -14,7 +14,7 @@ def haversine(lon1, lat1, lon2, lat2):
 
 class AlgoIO:
 
-    def __init__(self, out_format: list[OutputFormatItem], input_path="inpt.txt", output_path="output.txt"):
+    def __init__(self, out_format: list[OutputFormatItem], input_path, output_path):
         self.out_format = out_format
         self.input_path = input_path
         self.output_path = output_path

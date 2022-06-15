@@ -32,6 +32,9 @@ class Algorithm:
     def set_tab(self, tab):
         self.ui_tab = tab
 
+    def unset_tab(self):
+        self.ui_tab = None
+
     def run(self):
         try:
             print('hi run algo')
@@ -56,7 +59,10 @@ class Algorithm:
             #     self.show_error_message('Входные координаты не входят в рассматриваемую область')
             #     return
 
-            io = AlgoIO(self.output_format, input_path="../input/input.txt", output_path="../output/output.txt")
+            io = AlgoIO(self.output_format,
+                        input_path="../input/input.txt",
+                        output_path="../output/output_"+str(self.id)+".txt")
+
             io.gdf_to_input(self.gdf, (lon1, lat1), (lon2, lat2))
 
             shell_command = ""

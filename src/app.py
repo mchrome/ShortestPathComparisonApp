@@ -11,6 +11,7 @@ import subprocess
 from algorithm import Algorithm
 from output_format import OutputFormatItem
 
+
 class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
 
     def __init__(self):
@@ -58,6 +59,7 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
 
         self.pushButton_9.clicked.connect(self.add_algo_parameter)
         self.pushButton_12.clicked.connect(self.add_output_format)
+        self.pushButton_11.clicked.connect(self.delete_output_format)
 
         self.radioButton.clicked.connect(self.std_output_set)
         self.radioButton_2.clicked.connect(self.file_output_set)
@@ -67,24 +69,24 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
         self.pushButton_15.clicked.connect(self.add_algorithm)
 
     def add_algorithm(self):
-        new_algo = Algorithm(id=self.tab_cnt, name=self.lineEdit_27.text(), path=self.lineEdit_22.text(), gdf=self.geo_data)
-        self.algorithms.append(new_algo)
+        self.algorithms.append(Algorithm(id=self.tab_cnt,
+                                         name=self.lineEdit_27.text(),
+                                         path=self.lineEdit_22.text(),
+                                         gdf=self.geo_data))
 
         for i in range(self.listWidget_2.count()):
-            new_algo.add_argument(self.listWidget_2.item(i).text())
+            self.algorithms[-1].add_argument(self.listWidget_2.item(i).text())
 
         for i in range(self.tableWidget.rowCount()):
             name = self.tableWidget.item(i, 0).text()
             type = self.tableWidget.item(i, 1).text()
             color = self.tableWidget.item(i, 2).text()
 
-            new_algo.add_output_format(OutputFormatItem(name, type, color))
+            self.algorithms[-1].add_output_format(OutputFormatItem(name, type, color))
 
-        new_algo.set_tab(self.add_algorithm_tab(new_algo))
-
+        self.algorithms[-1].set_tab(self.add_algorithm_tab(self.algorithms[-1]))
 
     def add_algorithm_tab(self, algo: Algorithm):
-
 
         tab = QtWidgets.QWidget()
         tab.setObjectName("tab_algo_" + str(self.tab_cnt))
@@ -129,32 +131,32 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
 
         label = QtWidgets.QLabel(groupBox)
         label.setGeometry(QtCore.QRect(90, 20, 111, 16))
-        label.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_"+str(lb_cnt))
-        lb_cnt+=1
+        label.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_" + str(lb_cnt))
+        lb_cnt += 1
 
         label_2 = QtWidgets.QLabel(groupBox)
         label_2.setGeometry(QtCore.QRect(80, 70, 111, 16))
-        label_2.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_"+str(lb_cnt))
+        label_2.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_" + str(lb_cnt))
         lb_cnt += 1
 
         label_3 = QtWidgets.QLabel(groupBox)
         label_3.setGeometry(QtCore.QRect(10, 40, 16, 16))
-        label_3.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_"+str(lb_cnt))
+        label_3.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_" + str(lb_cnt))
         lb_cnt += 1
 
         label_4 = QtWidgets.QLabel(groupBox)
         label_4.setGeometry(QtCore.QRect(10, 90, 16, 16))
-        label_4.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_"+str(lb_cnt))
+        label_4.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_" + str(lb_cnt))
         lb_cnt += 1
 
         label_5 = QtWidgets.QLabel(groupBox)
         label_5.setGeometry(QtCore.QRect(120, 40, 16, 16))
-        label_5.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_"+str(lb_cnt))
+        label_5.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_" + str(lb_cnt))
         lb_cnt += 1
 
         label_6 = QtWidgets.QLabel(groupBox)
         label_6.setGeometry(QtCore.QRect(120, 90, 16, 16))
-        label_6.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_"+str(lb_cnt))
+        label_6.setObjectName("algo_" + str(self.tab_cnt) + "_" + "label_" + str(lb_cnt))
         lb_cnt += 1
 
         label.setText("Начало пути")
@@ -184,23 +186,41 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
         tableWidget.setHorizontalHeaderItem(1, item)
         tble_cnt += 1
 
-        ## Добавление в интерфейс параметров
-
-
-
-        ## Остальное
+        # Добавление в интерфейс параметров
         for i in range(len(algo.arguments)):
             tableWidget.insertRow(tableWidget.rowCount())
-            tableWidget.setItem(tableWidget.rowCount()-1, 0, QTableWidgetItem(algo.arguments[i]))
+            tableWidget.setItem(tableWidget.rowCount() - 1, 0, QTableWidgetItem(algo.arguments[i]))
 
-        ## Файлы ввода-вывода
+        # Файлы ввода-вывода в параметрах
         tableWidget.setItem(0, 1, QTableWidgetItem('../input/input.txt'))
-        tableWidget.setItem(1, 1, QTableWidgetItem('../output/output.txt'))
+        tableWidget.setItem(1, 1, QTableWidgetItem("../output/output_"+str(algo.id)+".txt"))
+
+        # Числовой вывод
+
+        groupBox = QtWidgets.QGroupBox(tab)
+        groupBox.setGeometry(QtCore.QRect(1030, 430, 231, 211))
+        groupBox.setObjectName("algo_" + str(self.tab_cnt) + "_" + "groupBox_" + str(gb_cnt))
+        groupBox.setTitle("Числовые характеристики")
+        gb_cnt += 1
+
+        tableWidget = QtWidgets.QTableWidget(groupBox)
+        tableWidget.setGeometry(QtCore.QRect(10, 20, 211, 181))
+        tableWidget.setObjectName("algo_" + str(self.tab_cnt) + "_" + "tableWidget_" + str(tble_cnt))
+        tableWidget.setColumnCount(2)
+        item = QtWidgets.QTableWidgetItem()
+        item.setText("Характеристика")
+        tableWidget.setHorizontalHeaderItem(0, item)
+        item = QtWidgets.QTableWidgetItem()
+        item.setText("Значение")
+        tableWidget.setHorizontalHeaderItem(1, item)
+        tble_cnt += 1
+
+
 
         # Результат
         groupBox = QtWidgets.QGroupBox(tab)
         groupBox.setGeometry(QtCore.QRect(10, 10, 1001, 681))
-        groupBox.setObjectName("algo_" + str(self.tab_cnt)+"_"+"groupBox_" + str(gb_cnt))
+        groupBox.setObjectName("algo_" + str(self.tab_cnt) + "_" + "groupBox_" + str(gb_cnt))
         groupBox.setTitle("Карта дорог")
         gb_cnt += 1
 
@@ -216,17 +236,17 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
 
         pushButton = QtWidgets.QPushButton(tab)
         pushButton.setGeometry(QtCore.QRect(1060, 640, 181, 23))
-        pushButton.setObjectName("algo_" + str(self.tab_cnt)+"_"+"pushButton_"+str(pb_cnt))
+        pushButton.setObjectName("algo_" + str(self.tab_cnt) + "_" + "pushButton_" + str(pb_cnt))
         pushButton.setText("Запустить")
-        pushButton.clicked.connect(self.connect_algo)
-        pb_cnt+=1
+        pushButton.clicked.connect(
+            self.algorithms[-1].run)  ########################################################################
+        pb_cnt += 1
 
         self.tabWidget.addTab(tab, algo.name)
 
         self.tab_cnt += 1
 
         return tab
-
 
     def connect_algo(self):
         self.algorithms[-1].run()
@@ -241,25 +261,30 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
 
     def add_output_format(self):
 
-        #self.add_cnt_output_format()
+        # self.add_cnt_output_format()
 
         self.tableWidget.insertRow(self.tableWidget.rowCount())
 
-        self.tableWidget.setItem(self.tableWidget.rowCount()-1, 0, QTableWidgetItem(self.lineEdit_25.text()))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem(self.lineEdit_25.text()))
 
         if self.radioButton_3.isChecked():
-            self.tableWidget.setItem(self.tableWidget.rowCount()-1, 1, QTableWidgetItem("Вершины"))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem("Вершины"))
         else:
-            self.tableWidget.setItem(self.tableWidget.rowCount()-1, 1, QTableWidgetItem("Дуги"))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem("Дуги"))
 
-        self.tableWidget.setItem(self.tableWidget.rowCount()-1, 2, QTableWidgetItem(self.comboBox_2.currentText()))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QTableWidgetItem(self.comboBox_2.currentText()))
+
+    def delete_output_format(self):
+        for indx in self.tableWidget.selectionModel().selectedRows():
+            print(indx.row())
+            self.tableWidget.removeRow(indx.row())
 
     def add_cnt_output_format(self):
         self.tableWidget.insertRow(self.tableWidget.rowCount())
-        self.tableWidget.setItem(self.tableWidget.rowCount()-1, 0,
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0,
                                  QTableWidgetItem("Количество " + self.lineEdit_25.text()))
-        self.tableWidget.setItem(self.tableWidget.rowCount()-1, 1, QTableWidgetItem("Число"))
-        self.tableWidget.setItem(self.tableWidget.rowCount()-1, 2, QTableWidgetItem("-"))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem("Число"))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QTableWidgetItem("-"))
 
     def std_output_set(self):
         self.lineEdit_24.setEnabled(False)
@@ -338,13 +363,12 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
             tab = algo.ui_tab
             print(tab)
             map_lbl = tab.findChild(QtWidgets.QLabel,
-                                               "algo_" + str(algo.id)+ "_pathFindingResult_1")
+                                    "algo_" + str(algo.id) + "_pathFindingResult_1")
 
             algo.set_geo_data(self.geo_data)
             print(map_lbl)
             map_lbl.setPixmap(QPixmap('../images/img.jpg'))
             print(1)
-
 
     def run_dijkstra(self):
 
@@ -368,11 +392,8 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
         io = AlgoIO("dijkstra", input_path="../input/input.txt", output_path="../output/output_dijkstra.txt")
         io.gdf_to_input(self.geo_data, (lon1, lat1), (lon2, lat2))
         subprocess.run(".\\PFA_.exe dijkstra inpt.txt", shell=True)
-        print("kek")
         fig = io.get_result_fig(self.geo_data)
-        print("kek")
         fig.savefig('.\\images\\img_dijkstra.jpg', dpi=200)
-        print("kek")
         self.pathFindingResult_2.setPixmap(QPixmap('../images/img_dijkstra.jpg'))
         self.pathFindingResult_2.setScaledContents(True)
         self.labelDijkstraET.setText(str(io.execution_time))
