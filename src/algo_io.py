@@ -70,9 +70,10 @@ class AlgoIO:
             for vertex in v:
                 f.write(f'{vertex[0]} {vertex[1]}\n')
 
-    def get_result_fig(self, base_gdf):
+    def parse_output(self, base_gdf):
 
-        output = []
+        output_visual = []
+        output_numbers = []
 
         with open(self.output_path, 'r') as f:
             for out_form in self.out_format:
@@ -81,14 +82,20 @@ class AlgoIO:
                     verticies = []
                     for i in range(vertex_count):
                         verticies.append(self.vtoc[int(f.readline())])
-                    output.append((verticies, out_form.color))
+                    output_visual.append((verticies, out_form.color))
                 if out_form.type == "Дуги":
                     edge_count = int(f.readline())
                     edges = []
-                    for i in range(edge_count-1): ###########################################################################################
+                    for i in range(edge_count):
                         edge = tuple(map(int, f.readline().split()))
                         edges.append(self.etols[edge])
-                    output.append((edges, out_form.color))
+                    output_visual.append((edges, out_form.color))
+                if out_form.type == "Числа":
+                    number_count = int(f.readline())
+                    numbers = []
+                    for i in range(number_count):
+                        numbers.append(float(f.readline()))
+                    output_numbers.append(numbers)
 
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1, 1])
@@ -98,7 +105,7 @@ class AlgoIO:
         ax.margins(0)
         ax.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
 
-        for out in output:
+        for out in output_visual:
             gdf = self.get_mercator_gdf(out[0])
             fig = gdf.plot(ax=fig, color=out[1], linewidth=0.8)
 
@@ -108,8 +115,7 @@ class AlgoIO:
         fig = gdf_st.plot(ax=fig, color='brown')
         fig = gdf_end.plot(ax=fig, color='green')
 
-
-        return fig.get_figure()
+        return (fig.get_figure(), output_numbers)
 
     def get_mercator_gdf(self, geometry):
         gdf = gpd.GeoDataFrame(geometry=geometry)

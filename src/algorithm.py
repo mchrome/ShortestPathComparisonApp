@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import subprocess
 from PyQt5.QtGui import QPixmap
 from output_format import OutputFormatItem
-
+from PyQt5.QtWidgets import QTableWidgetItem
 
 class Algorithm:
 
@@ -13,7 +13,7 @@ class Algorithm:
         self.name = name
         self.path = path
         self.arguments = []
-        self.output_format = []
+        self.output_format : list[OutputFormatItem] = []
         self.ui_tab = None
         self.gdf = gdf
 
@@ -77,7 +77,7 @@ class Algorithm:
             subprocess.run(shell_command, shell=True)
 
             print("AAAA")
-            fig = io.get_result_fig(self.gdf)
+            fig, numbers = io.parse_output(self.gdf)
             fig.savefig('..\\images\\img_'+'algo_'+str(self.id)+'.jpg', dpi=200)
 
             pathFindingResult = self.ui_tab.findChild(QtWidgets.QLabel,
@@ -85,7 +85,13 @@ class Algorithm:
 
             pathFindingResult.setPixmap(QPixmap('..\\images\\img_'+'algo_'+str(self.id)+'.jpg'))
             pathFindingResult.setScaledContents(True)
-            print("AAAA")
-            #self.labelDijkstraET.setText(str(io.execution_time))
+
+            tableWidgetWithNumbers = self.ui_tab.findChild(QtWidgets.QTableWidget,
+                                                   "algo_" + str(self.id) + "_" + "tableWidget_2")
+            for i in range(tableWidgetWithNumbers.rowCount()):
+                tableWidgetWithNumbers.setItem(i,
+                                               1,
+                                               QTableWidgetItem(str(numbers[i][0])))
+
         except Exception as e:
             print(e)

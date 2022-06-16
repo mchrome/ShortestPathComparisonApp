@@ -10,7 +10,7 @@ from algo_io import AlgoIO
 import subprocess
 from algorithm import Algorithm
 from output_format import OutputFormatItem
-
+import os
 
 class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
 
@@ -22,36 +22,12 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
         self.tab_cnt = 1
 
         self.pushButton.clicked.connect(self.set_map)
-        self.pushButton_2.clicked.connect(self.run_dijkstra)
-        self.pushButton_3.clicked.connect(self.run_bidijkstra)
-        self.pushButton_4.clicked.connect(self.run_astar)
-        self.pushButton_5.clicked.connect(self.run_alt)
         self.pushButton_7.clicked.connect(self.run_multiple)
 
         self.lineEdit.setText('56.19457')
         self.lineEdit_2.setText('57.97275')
         self.lineEdit_3.setText('56.31843')
         self.lineEdit_4.setText('58.01179')
-
-        self.lineEdit_5.setText('56.21')
-        self.lineEdit_6.setText('57.98')
-        self.lineEdit_7.setText('56.28')
-        self.lineEdit_8.setText('57.99')
-
-        self.lineEdit_9.setText('56.21')
-        self.lineEdit_10.setText('57.98')
-        self.lineEdit_11.setText('56.28')
-        self.lineEdit_12.setText('57.99')
-
-        self.lineEdit_13.setText('56.21')
-        self.lineEdit_14.setText('57.98')
-        self.lineEdit_15.setText('56.28')
-        self.lineEdit_16.setText('57.99')
-
-        self.lineEdit_17.setText('56.21')
-        self.lineEdit_18.setText('57.98')
-        self.lineEdit_19.setText('56.28')
-        self.lineEdit_20.setText('57.99')
 
         self.pushButton_8.clicked.connect(self.open_file_dialog)
 
@@ -67,6 +43,53 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
         self.radioButton_4.clicked.connect(self.output_format_edge_set)
 
         self.pushButton_15.clicked.connect(self.add_algorithm)
+
+        self.init_base_algorithms()
+
+    def init_base_algorithms(self):
+
+        algo_names = {'dijkstra.exe':'Алгоритм Дейкстры',
+                      'bidijkstra.exe': 'Двунаправленный алгоритм Дейкстры',
+                      'astar.exe': 'A*',
+                      'alt.exe': 'ALT'}
+
+        for dir_path, _, filenames in os.walk('../algorithms'):
+            for f in filenames:
+                self.algorithms.append(Algorithm(id=self.tab_cnt,
+                                                 name=algo_names[f],
+                                                 path=os.path.abspath(os.path.join(dir_path, f)),
+                                                 gdf=self.geo_data))
+
+
+                self.algorithms[-1].add_argument('Файл ввода')
+                self.algorithms[-1].add_argument('Файл вывода')
+
+                self.algorithms[-1].add_output_format(OutputFormatItem(
+                    'Проверенные дуги',
+                    'Дуги',
+                    'black'))
+
+                self.algorithms[-1].add_output_format(OutputFormatItem(
+                    'Кратчайший путь',
+                    'Дуги',
+                    'red'))
+
+                self.algorithms[-1].add_output_format(OutputFormatItem(
+                    'Время выполнения',
+                    'Числа',
+                    '-'))
+
+                if f == 'alt.exe':
+                    self.algorithms[-1].add_output_format(OutputFormatItem(
+                        'Ориентиры',
+                        'Вершины',
+                        'yellow'))
+                    self.algorithms[-1].add_output_format(OutputFormatItem(
+                        'Время предобработки',
+                        'Числа',
+                        '-'))
+
+                self.algorithms[-1].set_tab(self.add_algorithm_tab(self.algorithms[-1]))
 
     def add_algorithm(self):
         self.algorithms.append(Algorithm(id=self.tab_cnt,
@@ -215,7 +238,12 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
         tableWidget.setHorizontalHeaderItem(1, item)
         tble_cnt += 1
 
+        # Добавление числовых характеристик алгоритма
 
+        for output_item in algo.output_format:
+            if output_item.type == 'Числа':
+                tableWidget.insertRow(tableWidget.rowCount())
+                tableWidget.setItem(tableWidget.rowCount() - 1, 0, QTableWidgetItem(output_item.name))
 
         # Результат
         groupBox = QtWidgets.QGroupBox(tab)
@@ -261,18 +289,26 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
 
     def add_output_format(self):
 
-        # self.add_cnt_output_format()
-
         self.tableWidget.insertRow(self.tableWidget.rowCount())
 
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem(self.lineEdit_25.text()))
 
         if self.radioButton_3.isChecked():
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem("Вершины"))
-        else:
+        if self.radioButton_4.isChecked():
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem("Дуги"))
+        if self.radioButton_5.isChecked():
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem("Числа"))
 
-        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QTableWidgetItem(self.comboBox_2.currentText()))
+        if not self.radioButton_5.isChecked():
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1,
+                                     2,
+                                     QTableWidgetItem(self.comboBox_2.currentText()))
+        else:
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1,
+                                     2,
+                                     QTableWidgetItem('-'))
+
 
     def delete_output_format(self):
         for indx in self.tableWidget.selectionModel().selectedRows():
@@ -347,17 +383,9 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
 
         ax.margins(0)
         ax.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
-        fig.savefig('img.jpg', dpi=200)
+        fig.savefig('../images/img.jpg', dpi=200)
         self.pathFindingResult.setPixmap(QPixmap('../images/img.jpg'))
         self.pathFindingResult.setScaledContents(True)
-        self.pathFindingResult_2.setPixmap(QPixmap('../images/img.jpg'))
-        self.pathFindingResult_2.setScaledContents(True)
-        self.pathFindingResult_3.setPixmap(QPixmap('../images/img.jpg'))
-        self.pathFindingResult_3.setScaledContents(True)
-        self.pathFindingResult_4.setPixmap(QPixmap('../images/img.jpg'))
-        self.pathFindingResult_4.setScaledContents(True)
-        self.pathFindingResult_5.setPixmap(QPixmap('../images/img.jpg'))
-        self.pathFindingResult_5.setScaledContents(True)
 
         for algo in self.algorithms:
             tab = algo.ui_tab
@@ -369,117 +397,6 @@ class App(PFA.Ui_MainWindow, QtWidgets.QMainWindow):
             print(map_lbl)
             map_lbl.setPixmap(QPixmap('../images/img.jpg'))
             print(1)
-
-    def run_dijkstra(self):
-
-        if self.geo_data is None:
-            self.show_error_message('Не выбрана входная область')
-            return
-
-        try:
-            lon1 = float(self.lineEdit_5.text())
-            lat1 = float(self.lineEdit_6.text())
-            lon2 = float(self.lineEdit_7.text())
-            lat2 = float(self.lineEdit_8.text())
-        except ValueError:
-            self.show_error_message('Координаты не являются числом')
-            return
-
-        if not (lat1 > self.bbox[1] and lon1 > self.bbox[0] and lat2 < self.bbox[3] and lon2 < self.bbox[2]):
-            self.show_error_message('Входные координаты не входят в рассматриваемую область')
-            return
-
-        io = AlgoIO("dijkstra", input_path="../input/input.txt", output_path="../output/output_dijkstra.txt")
-        io.gdf_to_input(self.geo_data, (lon1, lat1), (lon2, lat2))
-        subprocess.run(".\\PFA_.exe dijkstra inpt.txt", shell=True)
-        fig = io.get_result_fig(self.geo_data)
-        fig.savefig('.\\images\\img_dijkstra.jpg', dpi=200)
-        self.pathFindingResult_2.setPixmap(QPixmap('../images/img_dijkstra.jpg'))
-        self.pathFindingResult_2.setScaledContents(True)
-        self.labelDijkstraET.setText(str(io.execution_time))
-
-    def run_bidijkstra(self):
-
-        if self.geo_data is None:
-            self.show_error_message('Не выбрана входная область')
-            return
-
-        try:
-            lon1 = float(self.lineEdit_9.text())
-            lat1 = float(self.lineEdit_10.text())
-            lon2 = float(self.lineEdit_11.text())
-            lat2 = float(self.lineEdit_12.text())
-        except ValueError:
-            self.show_error_message('Координаты не являются числом')
-            return
-
-        if not (lat1 > self.bbox[1] and lon1 > self.bbox[0] and lat2 < self.bbox[3] and lon2 < self.bbox[2]):
-            self.show_error_message('Входные координаты не входят в рассматриваемую область')
-            return
-
-        io = AlgoIO("bidijkstra", input_path="../input/input.txt", output_path="../output/output_bidijkstra.txt")
-        io.gdf_to_input(self.geo_data, (lon1, lat1), (lon2, lat2))
-        subprocess.run("..\\algorithms\\PFA_.exe bidijkstra inpt.txt", shell=True)
-        fig = io.get_result_fig(self.geo_data)
-        fig.savefig('img_bidijkstra.jpg', dpi=200)
-        self.pathFindingResult_3.setPixmap(QPixmap('../images/img_bidijkstra.jpg'))
-        self.pathFindingResult_3.setScaledContents(True)
-        self.labelBidijkstraET.setText(str(io.execution_time))
-
-    def run_astar(self):
-        if self.geo_data is None:
-            self.show_error_message('Не выбрана входная область')
-            return
-
-        try:
-            lon1 = float(self.lineEdit_13.text())
-            lat1 = float(self.lineEdit_14.text())
-            lon2 = float(self.lineEdit_15.text())
-            lat2 = float(self.lineEdit_16.text())
-        except ValueError:
-            self.show_error_message('Координаты не являются числом')
-            return
-
-        if not (lat1 > self.bbox[1] and lon1 > self.bbox[0] and lat2 < self.bbox[3] and lon2 < self.bbox[2]):
-            self.show_error_message('Входные координаты не входят в рассматриваемую область')
-            return
-
-        io = AlgoIO("astar", input_path="../input/input.txt", output_path="../output/output_astar.txt")
-        io.gdf_to_input(self.geo_data, (lon1, lat1), (lon2, lat2))
-        subprocess.run("..\\algorithms\\PFA_.exe astar inpt.txt", shell=True)
-        fig = io.get_result_fig(self.geo_data)
-        fig.savefig('img_astar.jpg', dpi=200)
-        self.pathFindingResult_4.setPixmap(QPixmap('../images/img_astar.jpg'))
-        self.pathFindingResult_4.setScaledContents(True)
-        self.labelAstarET.setText(str(io.execution_time))
-
-    def run_alt(self):
-        if self.geo_data is None:
-            self.show_error_message('Не выбрана входная область')
-            return
-
-        try:
-            lon1 = float(self.lineEdit_17.text())
-            lat1 = float(self.lineEdit_18.text())
-            lon2 = float(self.lineEdit_19.text())
-            lat2 = float(self.lineEdit_20.text())
-        except ValueError:
-            self.show_error_message('Координаты не являются числом')
-            return
-
-        if not (lat1 > self.bbox[1] and lon1 > self.bbox[0] and lat2 < self.bbox[3] and lon2 < self.bbox[2]):
-            self.show_error_message('Входные координаты не входят в рассматриваемую область')
-            return
-
-        io = AlgoIO("alt", input_path="../input/input.txt", output_path="../output/output_alt.txt")
-        io.gdf_to_input(self.geo_data, (lon1, lat1), (lon2, lat2))
-        subprocess.run("..\\algorithms\\PFA_.exe alt inpt.txt", shell=True)
-        fig = io.get_result_fig(self.geo_data)
-        fig.savefig('img_alt.jpg', dpi=200)
-        self.pathFindingResult_5.setPixmap(QPixmap('../images/img_alt.jpg'))
-        self.pathFindingResult_5.setScaledContents(True)
-        self.labelAltET.setText(str(io.execution_time))
-        self.labelAltPT.setText(str(io.preprocessing_time))
 
     def run_multiple(self):
 
