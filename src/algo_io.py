@@ -4,6 +4,7 @@ from math import radians, sin, cos, asin, sqrt
 import matplotlib.pyplot as plt
 from output_format import OutputFormatItem
 
+
 def haversine(lon1, lat1, lon2, lat2):
     lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
     dlon = lon2 - lon1
@@ -70,7 +71,7 @@ class AlgoIO:
             for vertex in v:
                 f.write(f'{vertex[0]} {vertex[1]}\n')
 
-    def parse_output(self, base_gdf):
+    def make_map_with_result(self, base_gdf):
 
         output_visual = []
         output_numbers = []
@@ -105,9 +106,13 @@ class AlgoIO:
         ax.margins(0)
         ax.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
 
-        for out in output_visual:
-            gdf = self.get_mercator_gdf(out[0])
-            fig = gdf.plot(ax=fig, color=out[1], linewidth=0.8)
+        for i in range(1,len( output_visual)):
+            gdf = self.get_mercator_gdf(output_visual[i][0])
+            fig = gdf.plot(ax=fig, color=output_visual[i][1], linewidth=0.8)
+
+        # Кратчайший в конце
+        gdf = self.get_mercator_gdf(output_visual[0][0])
+        fig = gdf.plot(ax=fig, color=output_visual[0][1], linewidth=0.8)
 
         gdf_st = self.get_mercator_gdf([Point(self.st[0], self.st[1])])
         gdf_end = self.get_mercator_gdf([Point(self.end[0], self.end[1])])
@@ -122,3 +127,12 @@ class AlgoIO:
         gdf.crs = {"init": "epsg:4326"}
         gdf = gdf.to_crs(epsg=3857)
         return gdf
+
+    def get_path_from_output(self):
+        edges = []
+        with open(self.output_path, 'r') as f:
+            edge_count = int(f.readline())
+            for i in range(edge_count):
+                edge = tuple(map(int, f.readline().split()))
+                edges.append(self.etols[edge])
+        return edges
